@@ -92,7 +92,7 @@ ggsave('Compacity-Elongation ratio plot.png', plot = comElongPlot, dpi=300, widt
 
 # DC avg
 
-ggplot(FISHdata, aes(x=X_DC_avg/X_volume))+
+dcPlot <- ggplot(FISHdata, aes(x=X_DC_avg/X_volume))+
   geom_density(aes(y=..density.., fill=Sp))+
   facet_wrap(~Sp_Tissue)+
   theme_bw()+
@@ -103,5 +103,5 @@ ggplot(FISHdata, aes(x=X_DC_avg/X_volume))+
   theme(legend.position='bottom', legend.title=element_blank())+
   xlim(c(0, 0.4))
   
-
+ggsave('DC plot', plot=dcPlot, dpi=300, width = 9, height = 5)
 
