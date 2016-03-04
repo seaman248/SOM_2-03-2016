@@ -74,25 +74,48 @@ xVolumesPlot <- ggplot(FISHdata, aes(x=Sp, y=X_volume/Nuc_volume*100, fill=Sp))+
 ggsave('Volumes of X.png', plot=xVolumesPlot, dpi=300, width = 9, height = 5)
 
 tapply(FISHdata$X_volume/FISHdata$Nuc_volume, FISHdata$Sp_Tissue, mean)
+tapply(FISHdata$X_surface/FISHdata$Nuc_volume, FISHdata$Sp_Tissue, mean)
 
 # Compacity / Elongation
 
-comElongPlot <- ggplot(FISHdata, aes(x=X_compacity*100, y=X_rel_ellong*100, col=Sp))+
-  geom_point(size=3)+
-  stat_smooth(aes(col=Sp), method=glm, se=FALSE)+
+# comElongPlot <- ggplot(FISHdata, aes(x=X_compacity*100, y=X_rel_ellong*100, col=Sp))+
+#   facet_wrap(~Tissue)+
+#   stat_density2d(aes(fill=..density..), geom='tile',contour=FALSE)+
+#   geom_point(size=3)+
+#   xlab('Compacity of X CT[%]')+
+#   ylab('Relative elongation of X CT [%]')+
+#   scale_colour_manual(values=c('orange', 'lightblue'))+
+#   ggtitle('Compacity and Elongation of X-CT')+
+#   theme_bw()
+# 
+# ggsave('Compacity-Elongation ratio plot.png', plot = comElongPlot, dpi=300, width = 9, height = 5)
+comPlot <- ggplot(FISHdata, aes(x=Sp, y=X_compacity*100))+
+  geom_boxplot(aes(fill=Sp))+
   facet_wrap(~Tissue)+
-  xlab('Compacity of X CT[%]')+
-  ylab('Relative elongation of X CT [%]')+
-  scale_colour_manual(values=c('orange', 'lightblue'))+
-  ggtitle('Compacity ~ Elongation ratio')+
-  theme(legend.position='bottom', legend.title=element_blank())+
+  xlab('')+
+  ylab('Compacity [%]')+
+  scale_fill_manual(values=c('orange', 'lightblue'))+
   theme_bw()
 
-ggsave('Compacity-Elongation ratio plot.png', plot = comElongPlot, dpi=300, width = 9, height = 5)
+elongPlot <- ggplot(FISHdata, aes(x=Sp, fill=Sp, y=X_rel_ellong))+
+  geom_boxplot()+
+  facet_wrap(~Tissue)+
+  xlab('')+
+  ylab('Relative elongation [%]') +
+  scale_fill_manual(values=c('orange', 'lightblue'))+
+  theme_bw()
+
+
+mComEl <- grid.arrange(comPlot, elongPlot)
+ggsave('Compacity and elongation plot.png', plot=mComEl, dpi=300, width=9, height=9)
+
+wilcox.test(atr_NC$X_elongation, lab_NC$X_elongation)
+wilcox.test(atr_NC$X_compacity, lab_NC$X_compacity)
 
 # DC avg
 
 dcPlot <- ggplot(FISHdata, aes(x=X_DC_avg/X_volume))+
+  
   geom_density(aes(y=..density.., fill=Sp))+
   facet_wrap(~Sp_Tissue)+
   theme_bw()+
