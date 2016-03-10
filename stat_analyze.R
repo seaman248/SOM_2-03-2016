@@ -1,9 +1,15 @@
 source('~/prog/r/spatial_organization_measurement_2-03-2016/fview.R')
+
+# Libraries
 library("ggplot2", lib.loc="/Library/Frameworks/R.framework/Versions/3.2/Resources/library")
 library("MASS", lib.loc="/Library/Frameworks/R.framework/Versions/3.2/Resources/library")
+library("FSA", lib.loc="/Library/Frameworks/R.framework/Versions/3.2/Resources/library")
+library("dunn.test", lib.loc="/Library/Frameworks/R.framework/Versions/3.2/Resources/library")
 
+# Data without Germ
 FISHdata <- subset(FISHdata, Tissue != 'Germ c.')
 
+# Devide into different namespase
 atr_NC <- subset(FISHdata, Sp == 'An. atroparvus' & Tissue == 'Nurse c.')
 lab_NC <- subset(FISHdata, Sp == 'An. labranchiae' & Tissue == 'Nurse c.')
 atr_FE <- subset(FISHdata, Sp == 'An. atroparvus' & Tissue == 'Fol ep.')
@@ -26,37 +32,25 @@ radDenPlot <- ggplot(FISHdata)+
 
 ggsave('Radial position Density plot.png', plot=radDenPlot, dpi=300, width = 9, height = 5)
 
-# wilcox.test(atr_NC$X_rad_pos, lab_NC$X_rad_pos, alternative = 'less', conf.level=0.95)
-# # p-value = 0.102
-# wilcox.test(atr_FE$X_rad_pos, lab_FE$X_rad_pos)
-# # p-value = 0.03693
-# wilcox.test(atr_NC$X_rad_pos, atr_FE$X_rad_pos)
-# # p-value = 0.5912
-# wilcox.test(lab_NC$X_rad_pos, lab_FE$X_rad_pos)
-# # p-value = 0.4378
-# shapiro.test(atr_NC$X_rad_pos)
-# # p-value = 0.3819
-# shapiro.test(lab_NC$X_rad_pos)
-# # p-value = 0.7698
-# t.test(atr_NC$X_rad_pos, lab_NC$X_rad_pos)
-# # p-value = 0.259
-pairwise.wilcox.test(FISHdata$X_rad_pos, FISHdata$Sp_Tissue, p.adj='bonf')
-ks.test(atr_FE$X_rad_pos, lab_FE$X_rad_pos)
-ks.test(atr_NC$X_rad_pos, lab_NC$X_rad_pos)
-
 radPosPlot <- ggplot(FISHdata)+
-  geom_boxplot(aes(x=Sp, y=X_rad_pos, fill=Sp))+
-  geom_hline(yintercept = mean(FISHdata$X_rad_pos), linetype='dashed', size=1.2, col='red') +
+  geom_boxplot(
+    aes(x = Sp, y = X_rad_pos * 100, fill = Sp)
+  )+
+  geom_hline(yintercept = mean(FISHdata$X_rad_pos*100), linetype='dashed', size=1.2, col='red') +
   facet_wrap(~Tissue)+
   xlab('')+
   ylab('Radial position of X CT [%]') +
-  theme_light()+
+  theme_bw()+
   theme(legend.position='bottom', legend.title=element_blank())+
   scale_fill_manual(values=c('orange', 'lightblue'))+
   ggtitle('Radial position of X CT')+
-  scale_y_continuous(breaks=seq(0, 1, 0.1))
+  scale_y_continuous(breaks=seq(0, 100, 10))
 
 ggsave('Radial position plot.png', plot=radPosPlot, dpi=300, width = 9, height = 5)
+radPos_comparison <- dunnTest(X_rad_pos~as.factor(Sp_Tissue), data=FISHdata, method='bonf')
+radPos_comparison$res$check <- radPos_comparison$res$P.adj < 0.01
+subset(radPos_comparison$res, select=c(Comparison, P.adj, check))
+ks.test(atr_NC$X_rad_pos, lab_NC$X_rad_pos)
 
 # X volumes
 xVolumesPlot <- ggplot(FISHdata, aes(x=Sp, y=X_volume/Nuc_volume*100, fill=Sp))+
@@ -76,19 +70,14 @@ ggsave('Volumes of X.png', plot=xVolumesPlot, dpi=300, width = 9, height = 5)
 tapply(FISHdata$X_volume/FISHdata$Nuc_volume, FISHdata$Sp_Tissue, mean)
 tapply(FISHdata$X_surface/FISHdata$Nuc_volume, FISHdata$Sp_Tissue, mean)
 
+vol_comparisons <- dunnTest(XN~as.factor(Sp_Tissue), data=FISHdata)
+vol_comparisons$res$check <- vol_comparisons$res$P.adj < 0.01
+subset(vol_comparisons$res, select=c(Comparison, P.adj, check))
+surf_comparisons <- dunnTest(X_surface/Nuc_volume~as.factor(Sp_Tissue), FISHdata)
+surf_comparisons$res$check <- surf_comparisons$res$P.adj < 0.01
+subset(surf_comparisons$res, select=c(Comparison, P.adj, check))
 # Compacity / Elongation
 
-# comElongPlot <- ggplot(FISHdata, aes(x=X_compacity*100, y=X_rel_ellong*100, col=Sp))+
-#   facet_wrap(~Tissue)+
-#   stat_density2d(aes(fill=..density..), geom='tile',contour=FALSE)+
-#   geom_point(size=3)+
-#   xlab('Compacity of X CT[%]')+
-#   ylab('Relative elongation of X CT [%]')+
-#   scale_colour_manual(values=c('orange', 'lightblue'))+
-#   ggtitle('Compacity and Elongation of X-CT')+
-#   theme_bw()
-# 
-# ggsave('Compacity-Elongation ratio plot.png', plot = comElongPlot, dpi=300, width = 9, height = 5)
 comPlot <- ggplot(FISHdata, aes(x=Sp, y=X_compacity*100))+
   geom_boxplot(aes(fill=Sp))+
   facet_wrap(~Tissue)+
@@ -96,6 +85,11 @@ comPlot <- ggplot(FISHdata, aes(x=Sp, y=X_compacity*100))+
   ylab('Compacity [%]')+
   scale_fill_manual(values=c('orange', 'lightblue'))+
   theme_bw()
+
+
+com_comparison <- dunnTest(X_compacity~as.factor(Sp_Tissue), data=FISHdata, method='bonf')
+com_comparison$res$check <- com_comparison$res$P.adj < 0.01
+subset(com_comparison$res, select = c(Comparison, P.adj, check))
 
 elongPlot <- ggplot(FISHdata, aes(x=Sp, fill=Sp, y=X_rel_ellong))+
   geom_boxplot()+
@@ -105,12 +99,12 @@ elongPlot <- ggplot(FISHdata, aes(x=Sp, fill=Sp, y=X_rel_ellong))+
   scale_fill_manual(values=c('orange', 'lightblue'))+
   theme_bw()
 
+elong_comparison <- dunnTest(X_rel_ellong~as.factor(Sp_Tissue), FISHdata, method='bonf')
+elong_comparison$res$check <- elong_comparison$res$P.adj < 0.01
+subset(elong_comparison$res, select = c(Comparison, P.adj, check))
 
 mComEl <- grid.arrange(comPlot, elongPlot)
 ggsave('Compacity and elongation plot.png', plot=mComEl, dpi=300, width=9, height=9)
-
-wilcox.test(atr_NC$X_elongation, lab_NC$X_elongation)
-wilcox.test(atr_NC$X_compacity, lab_NC$X_compacity)
 
 # DC avg
 
@@ -125,6 +119,12 @@ dcPlot <- ggplot(FISHdata, aes(x=X_DC_avg/X_volume))+
   scale_fill_manual(values=c('orange', 'lightblue'))+
   theme(legend.position='bottom', legend.title=element_blank())+
   xlim(c(0, 0.4))
+
+
+dc_comparison <- dunnTest(X_DC_avg/X_volume~as.factor(Sp_Tissue), FISHdata, method='bonf')
+dc_comparison$res$check <- dc_comparison$res$P.adj < 0.01
+subset(dc_comparison$res, select = c(Comparison, check))
   
-ggsave('DC plot', plot=dcPlot, dpi=300, width = 9, height = 5)
+  
+ggsave('DC plot.png', plot=dcPlot, dpi=300, width = 9, height = 5)
 
