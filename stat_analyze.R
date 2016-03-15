@@ -9,6 +9,10 @@ library("dunn.test", lib.loc="/Library/Frameworks/R.framework/Versions/3.2/Resou
 # Data without Germ
 FISHdata <- subset(FISHdata, Tissue != 'Germ c.')
 
+FISHdata <- subset(FISHdata, XN>0.03)
+
+plevel <- 0.05
+
 # Devide into different namespase
 atr_NC <- subset(FISHdata, Sp == 'An. atroparvus' & Tissue == 'Nurse c.')
 lab_NC <- subset(FISHdata, Sp == 'An. labranchiae' & Tissue == 'Nurse c.')
@@ -48,9 +52,8 @@ radPosPlot <- ggplot(FISHdata)+
 
 ggsave('Radial position plot.png', plot=radPosPlot, dpi=300, width = 9, height = 5)
 radPos_comparison <- dunnTest(X_rad_pos~as.factor(Sp_Tissue), data=FISHdata, method='bonf')
-radPos_comparison$res$check <- radPos_comparison$res$P.adj < 0.01
+radPos_comparison$res$check <- radPos_comparison$res$P.adj < plevel
 subset(radPos_comparison$res, select=c(Comparison, P.adj, check))
-ks.test(atr_NC$X_rad_pos, lab_NC$X_rad_pos)
 
 # X volumes
 xVolumesPlot <- ggplot(FISHdata, aes(x=Sp, y=X_volume/Nuc_volume*100, fill=Sp))+
@@ -68,14 +71,17 @@ xVolumesPlot <- ggplot(FISHdata, aes(x=Sp, y=X_volume/Nuc_volume*100, fill=Sp))+
 ggsave('Volumes of X.png', plot=xVolumesPlot, dpi=300, width = 9, height = 5)
 
 tapply(FISHdata$X_volume/FISHdata$Nuc_volume, FISHdata$Sp_Tissue, mean)
+tapply(FISHdata$X_volume/FISHdata$Nuc_volume, FISHdata$Sp_Tissue, sd)
 tapply(FISHdata$X_surface/FISHdata$Nuc_volume, FISHdata$Sp_Tissue, mean)
 
 vol_comparisons <- dunnTest(XN~as.factor(Sp_Tissue), data=FISHdata)
-vol_comparisons$res$check <- vol_comparisons$res$P.adj < 0.01
+vol_comparisons$res$check <- vol_comparisons$res$P.adj < plevel
 subset(vol_comparisons$res, select=c(Comparison, P.adj, check))
 surf_comparisons <- dunnTest(X_surface/Nuc_volume~as.factor(Sp_Tissue), FISHdata)
-surf_comparisons$res$check <- surf_comparisons$res$P.adj < 0.01
+surf_comparisons$res$check <- surf_comparisons$res$P.adj < plevel
 subset(surf_comparisons$res, select=c(Comparison, P.adj, check))
+
+
 # Compacity / Elongation
 
 comPlot <- ggplot(FISHdata, aes(x=Sp, y=X_compacity*100))+
@@ -88,7 +94,7 @@ comPlot <- ggplot(FISHdata, aes(x=Sp, y=X_compacity*100))+
 
 
 com_comparison <- dunnTest(X_compacity~as.factor(Sp_Tissue), data=FISHdata, method='bonf')
-com_comparison$res$check <- com_comparison$res$P.adj < 0.01
+com_comparison$res$check <- com_comparison$res$P.adj < plevel
 subset(com_comparison$res, select = c(Comparison, P.adj, check))
 
 elongPlot <- ggplot(FISHdata, aes(x=Sp, fill=Sp, y=X_rel_ellong))+
@@ -100,7 +106,7 @@ elongPlot <- ggplot(FISHdata, aes(x=Sp, fill=Sp, y=X_rel_ellong))+
   theme_bw()
 
 elong_comparison <- dunnTest(X_rel_ellong~as.factor(Sp_Tissue), FISHdata, method='bonf')
-elong_comparison$res$check <- elong_comparison$res$P.adj < 0.01
+elong_comparison$res$check <- elong_comparison$res$P.adj < plevel
 subset(elong_comparison$res, select = c(Comparison, P.adj, check))
 
 mComEl <- grid.arrange(comPlot, elongPlot)
@@ -122,7 +128,7 @@ dcPlot <- ggplot(FISHdata, aes(x=X_DC_avg/X_volume))+
 
 
 dc_comparison <- dunnTest(X_DC_avg/X_volume~as.factor(Sp_Tissue), FISHdata, method='bonf')
-dc_comparison$res$check <- dc_comparison$res$P.adj < 0.01
+dc_comparison$res$check <- dc_comparison$res$P.adj < plevel
 subset(dc_comparison$res, select = c(Comparison, check))
   
   
