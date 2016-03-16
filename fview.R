@@ -1,6 +1,7 @@
-setwd("~/prog/r/spatial_organization_measurement_2-03-2016")
+#setwd("~/prog/r/spatial_organization_measurement_2-03-2016")
 
-FISHdata <- read.csv2('3DFISH.csv', header=TRUE, sep=',', dec='.')
+#FISHdata <- read.csv2('3DFISH.csv', header=TRUE, sep=',', dec='.')
+FISHdata <- read.csv2('3D-FISH2.csv', header=TRUE, sep=',', dec='.')
 
 FISHdata$X_volume <- gsub(',', '', FISHdata$X_volume)
 FISHdata$X_volume <- as.numeric(FISHdata$X_volume)
